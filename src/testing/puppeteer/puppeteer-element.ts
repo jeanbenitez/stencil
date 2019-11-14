@@ -394,7 +394,7 @@ export class E2EElement extends MockHTMLElement implements pd.E2EElementInternal
     const rtn = await executionContext.evaluate((elm: HTMLElement, queuedActions: ElementAction[]) => {
       // BROWSER CONTEXT
       // cannot use async/await in here cuz typescript transpiles it in the node context
-      return (elm as any).componentOnReady().then(() => {
+      const performQueuedActions = () => {
         let rtn: any = null;
 
         queuedActions.forEach(queuedAction => {
@@ -443,7 +443,13 @@ export class E2EElement extends MockHTMLElement implements pd.E2EElementInternal
         }
 
         return rtn;
-      });
+      };
+
+      if (typeof (elm as any).componentOnReady === 'function') {
+        return (elm as any).componentOnReady().then(performQueuedActions);
+      } else {
+        return performQueuedActions();
+      }
 
     }, this._elmHandle, this._queuedActions as any);
 
